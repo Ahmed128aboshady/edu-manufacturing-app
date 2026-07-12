@@ -7,9 +7,8 @@ import '../models/user.dart';
 class AuthProvider extends ChangeNotifier {
   final OdooService _odoo = OdooService();
 
-  // Google Sign-In config — using your Client ID
+  // Google Sign-In — للأندرويد الـ SHA-1 بيشتغل تلقائي بدون clientId
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: '14802500935-l2jqgnbcd3e2tkrkormmivddb6kmu9g8.apps.googleusercontent.com',
     scopes: ['email', 'profile'],
   );
 
