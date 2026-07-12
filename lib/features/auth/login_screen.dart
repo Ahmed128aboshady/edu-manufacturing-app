@@ -56,6 +56,14 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  Future<void> _googleSignIn() async {
+    final auth = context.read<AuthProvider>();
+    final success = await auth.signInWithGoogle();
+    if (success && mounted) {
+      context.go('/home');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen>
                     children: [
                       const SizedBox(height: 60),
 
-                      // Header
+                      // Header Logo
                       Center(
                         child: Container(
                           width: 80,
@@ -118,7 +126,99 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 32),
+
+                      // ─── Google Sign-In Button ──────────────────────────
+                      Consumer<AuthProvider>(
+                        builder: (_, auth, __) {
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: OutlinedButton(
+                              onPressed: auth.isGoogleLoading ? null : _googleSignIn,
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                  color: Color(0xFF3C3C5C),
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                backgroundColor: const Color(0xFF1E1E3A),
+                              ),
+                              child: auth.isGoogleLoading
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        // Google "G" logo
+                                        Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Center(
+                                            child: Text(
+                                              'G',
+                                              style: TextStyle(
+                                                color: Color(0xFF4285F4),
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Continue with Google',
+                                          style: TextStyle(
+                                            color: AppTheme.textPrimary,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ─── OR Divider ─────────────────────────────────────
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Divider(color: Color(0xFF3C3C5C), thickness: 1),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'OR',
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const Expanded(
+                            child: Divider(color: Color(0xFF3C3C5C), thickness: 1),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
 
                       // Error message
                       Consumer<AuthProvider>(
@@ -265,7 +365,7 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                       const SizedBox(height: 24),
 
-                      // Sign up
+                      // Sign up link
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

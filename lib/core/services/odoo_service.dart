@@ -73,17 +73,46 @@ class OdooService {
   }
 
   Future<void> logout() async {
-    await _dio.post(
-      ApiConstants.logout,
-      data: {
-        'jsonrpc': '2.0',
-        'method': 'call',
-        'id': 1,
-        'params': {},
-      },
-    );
+    try {
+      await _dio.post(
+        ApiConstants.logout,
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'id': 1,
+          'params': {},
+        },
+      );
+    } catch (_) {}
     _sessionId = null;
     _userId = null;
+  }
+
+  /// للمستخدمين اللي دخلوا بـ Google — نحفظ الـ partner ID بس
+  void setGoogleSession(int partnerId) {
+    _userId = partnerId;
+    // مش محتاجين session_id لأن العمليات دي بتشتغل بـ public access
+  }
+
+  // ─── Create Partner (للـ Google Sign-In) ──────────────────────────────────
+  Future<int> createPartner({
+    required String name,
+    required String email,
+    String? photoUrl,
+  }) async {
+    final result = await callKw(
+      model: ApiConstants.resPartner,
+      method: 'create',
+      args: [
+        {
+          'name': name,
+          'email': email,
+          'customer_rank': 1,          // يظهر كعميل في Odoo
+          'comment': 'Registered via Google Sign-In on Mobile App',
+        }
+      ],
+    );
+    return result as int;
   }
 
   // ─── Generic call_kw ──────────────────────────────────────────────────────

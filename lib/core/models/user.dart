@@ -6,6 +6,8 @@ class AppUser {
   final String? street;
   final String? city;
   final int partnerId;
+  final String? photoUrl;      // صورة البروفايل من Google
+  final bool isGoogleUser;     // هل سجل بـ Google؟
 
   const AppUser({
     required this.id,
@@ -15,6 +17,8 @@ class AppUser {
     this.street,
     this.city,
     required this.partnerId,
+    this.photoUrl,
+    this.isGoogleUser = false,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json, {int? partnerId}) {
@@ -46,9 +50,16 @@ class AppUser {
     'street': street,
     'city': city,
     'partnerId': partnerId,
+    'photoUrl': photoUrl,
+    'isGoogleUser': isGoogleUser,
   };
 
-  AppUser copyWith({String? phone, String? street, String? city}) => AppUser(
+  AppUser copyWith({
+    String? phone,
+    String? street,
+    String? city,
+    String? photoUrl,
+  }) => AppUser(
     id: id,
     name: name,
     email: email,
@@ -56,5 +67,7 @@ class AppUser {
     street: street ?? this.street,
     city: city ?? this.city,
     partnerId: partnerId,
+    photoUrl: photoUrl ?? this.photoUrl,
+    isGoogleUser: isGoogleUser,
   );
 }
