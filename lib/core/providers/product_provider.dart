@@ -81,9 +81,13 @@ class ProductProvider extends ChangeNotifier {
       _hasMore = newProducts.length == _pageSize;
       _currentPage++;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+      final msg = e.toString().replaceAll('Exception:', '').trim();
+      if (msg == 'SESSION_EXPIRED') {
+        _errorMessage = 'Session expired';
+      } else {
+        _errorMessage = msg;
+      }
     }
-
     _isLoading = false;
     notifyListeners();
   }

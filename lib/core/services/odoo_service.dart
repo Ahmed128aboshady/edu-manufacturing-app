@@ -92,7 +92,13 @@ class OdooService {
     required String method,
     required List args,
     Map<String, dynamic>? kwargs,
+    bool requiresAuth = false,
   }) async {
+    final kw = Map<String, dynamic>.from(kwargs ?? {});
+    // Add context so Odoo accepts requests with/without full session
+    if (!kw.containsKey('context')) {
+      kw['context'] = {'website_id': 1, 'lang': 'en_US'};
+    }
     final response = await _dio.post(
       ApiConstants.callKw,
       data: {
@@ -103,15 +109,21 @@ class OdooService {
           'model': model,
           'method': method,
           'args': args,
-          'kwargs': kwargs ?? {},
+          'kwargs': kw,
         },
       },
     );
     if (response.data['error'] != null) {
       final errData = response.data['error'];
-      final msg = errData['data']?['message'] 
-                  ?? errData['message'] 
+      final msg = errData['data']?['message']
+                  ?? errData['message']
                   ?? 'Unknown Odoo error';
+      // Detect session expiry
+      if (msg.toString().toLowerCase().contains('session') ||
+          msg.toString().toLowerCase().contains('access') ||
+          (errData['data']?['name'] ?? '').toString().contains('SessionExpiredException')) {
+        throw Exception('SESSION_EXPIRED');
+      }
       throw Exception(msg);
     }
     return response.data['result'];
@@ -182,16 +194,21 @@ class OdooService {
   }
 
   Future<List<Map<String, dynamic>>> getCategories() async {
-    final result = await callKw(
-      model: ApiConstants.productPublicCategory,
-      method: 'search_read',
-      args: [[['website_published', '=', true]]],
-      kwargs: {
-        'fields': ['id', 'name', 'image_1024', 'parent_id', 'child_id'],
-        'order': 'sequence asc',
-      },
-    );
-    return List<Map<String, dynamic>>.from(result ?? []);
+    try {
+      final result = await callKw(
+        model: ApiConstants.productPublicCategory,
+        method: 'search_read',
+        args: [[]], // no domain filter - get all public categories
+        kwargs: {
+          'fields': ['id', 'name', 'image_1024', 'parent_id', 'child_id'],
+          'order': 'sequence asc',
+          'context': {'website_id': 1, 'lang': 'en_US'},
+        },
+      );
+      return List<Map<String, dynamic>>.from(result ?? []);
+    } catch (_) {
+      return []; // fallback to static categories in provider
+    }
   }
 
   // ─── Orders ───────────────────────────────────────────────────────────────
