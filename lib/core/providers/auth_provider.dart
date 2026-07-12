@@ -163,7 +163,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Google Sign-In failed. Please try again.';
+      _errorMessage = 'Google Sign-In failed: $e';
       _isGoogleLoading = false;
       notifyListeners();
       return false;
