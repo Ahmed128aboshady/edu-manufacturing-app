@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../app/theme.dart';
+import '../../app/router.dart';
 import '../../core/providers/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -259,9 +260,7 @@ class ProfileScreen extends StatelessWidget {
               // Delay logout slightly so the dialog pop animation finishes safely
               Future.delayed(const Duration(milliseconds: 250), () async {
                 await auth.logout();
-                if (context.mounted) {
-                  context.go('/login');
-                }
+                AppRouter.router.go('/login'); // استخدام الـ global router مباشرة
               });
             },
             child: const Text('Sign Out',
