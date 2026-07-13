@@ -217,20 +217,24 @@ class AuthProvider extends ChangeNotifier {
 
   // ─── Logout ───────────────────────────────────────────────────────────────
   Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isGoogleUser = prefs.getBool('is_google_user') ?? false;
+
+    // 1. Clear local state and notify listeners immediately for instant UI response
+    _user = null;
+    notifyListeners();
+
+    // 2. Clear local storage in background
+    await prefs.clear();
+
+    // 3. Trigger external logout/signOut in background without blocking UI transition
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final isGoogleUser = prefs.getBool('is_google_user') ?? false;
       if (isGoogleUser) {
-        await _googleSignIn.signOut();
+        _googleSignIn.signOut();
       } else {
-        await _odoo.logout();
+        _odoo.logout();
       }
     } catch (_) {}
-
-    _user = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    notifyListeners();
   }
 
   Future<void> _saveSession({required int partnerId}) async {

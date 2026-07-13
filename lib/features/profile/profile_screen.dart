@@ -254,10 +254,9 @@ class ProfileScreen extends StatelessWidget {
                 style: TextStyle(color: AppTheme.textSecondary)),
           ),
           TextButton(
-            onPressed: () async {
+            onPressed: () {
               Navigator.pop(context);
-              await auth.logout();
-              if (context.mounted) context.go('/login');
+              auth.logout();
             },
             child: const Text('Sign Out',
                 style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.w700)),
