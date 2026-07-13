@@ -12,11 +12,14 @@ import '../features/orders/orders_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/main/main_screen.dart';
 
+// تعريف مفتاح ملاحة جذري فريد وعالمي (Global Root Navigator Key)
+// هذا يمنع تداخلات الملاحة وتضارب الـ ShellRoute مع المسارات الجذرية (مثل تسجيل الدخول)
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+
 class AppRouter {
-  // تعريف الـ GoRouter كـ static final (Singleton) لضمان إنشائه مرة واحدة فقط في ذاكرة التطبيق
   static final GoRouter router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
-    // إضافة شاشة عرض أخطاء الملاحة البرمجية لالتقاط أي خطأ مسارات وعرضه مباشرة
     errorBuilder: (context, state) => Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
@@ -52,17 +55,21 @@ class AppRouter {
     routes: [
       GoRoute(
         path: '/splash',
+        parentNavigatorKey: rootNavigatorKey, // توجيه المسار للملاحة الجذرية خارج الـ Shell
         builder: (_, __) => const SplashScreen(),
       ),
       GoRoute(
         path: '/login',
+        parentNavigatorKey: rootNavigatorKey, // توجيه المسار للملاحة الجذرية خارج الـ Shell
         builder: (_, __) => const LoginScreen(),
       ),
       GoRoute(
         path: '/signup',
+        parentNavigatorKey: rootNavigatorKey, // توجيه المسار للملاحة الجذرية خارج الـ Shell
         builder: (_, __) => const SignupScreen(),
       ),
       ShellRoute(
+        // لا نحدد له parentNavigatorKey لأننا نريده كشريط تبويبات سفلي فرعي
         builder: (context, state, child) => MainScreen(child: child),
         routes: [
           GoRoute(
@@ -89,6 +96,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/product/:id',
+        parentNavigatorKey: rootNavigatorKey, // يفتح فوق شريط التبويبات بالكامل
         builder: (context, state) {
           final productId = int.parse(state.pathParameters['id']!);
           final extra = state.extra as Map<String, dynamic>?;
@@ -100,6 +108,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/checkout',
+        parentNavigatorKey: rootNavigatorKey, // يفتح فوق شريط التبويبات بالكامل
         builder: (_, __) => const CheckoutScreen(),
       ),
     ],
