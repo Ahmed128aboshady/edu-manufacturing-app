@@ -257,8 +257,11 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context);
               // Delay logout slightly so the dialog pop animation finishes safely
-              Future.delayed(const Duration(milliseconds: 250), () {
-                auth.logout();
+              Future.delayed(const Duration(milliseconds: 250), () async {
+                await auth.logout();
+                if (context.mounted) {
+                  context.go('/login');
+                }
               });
             },
             child: const Text('Sign Out',

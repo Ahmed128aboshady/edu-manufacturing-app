@@ -17,18 +17,8 @@ class AppRouter {
   static GoRouter createRouter(AuthProvider auth) {
     return GoRouter(
       initialLocation: '/splash',
-      refreshListenable: auth,
-      redirect: (context, state) {
-        final isLoggedIn = auth.isLoggedIn;
-        final isOnAuth = state.matchedLocation == '/login' ||
-            state.matchedLocation == '/signup';
-        final isOnSplash = state.matchedLocation == '/splash';
-
-        if (isOnSplash) return null;
-        if (!isLoggedIn && !isOnAuth) return '/login';
-        if (isLoggedIn && isOnAuth) return '/home';
-        return null;
-      },
+      // تم إلغاء الـ refreshListenable والـ redirect التلقائي لتجنب التضاربات مع حركات الملاحة والـ Dialogs
+      // الملاحة تتم الآن بشكل صريح (Explicit) ومستقر 100%
       routes: [
         GoRoute(
           path: '/splash',

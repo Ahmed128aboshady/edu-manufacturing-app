@@ -230,9 +230,9 @@ class AuthProvider extends ChangeNotifier {
     // 3. Trigger external logout/signOut in background without blocking UI transition
     try {
       if (isGoogleUser) {
-        _googleSignIn.signOut();
+        _googleSignIn.signOut().catchError((_) => null);
       } else {
-        _odoo.logout();
+        _odoo.logout().catchError((_) => null);
       }
     } catch (_) {}
   }
