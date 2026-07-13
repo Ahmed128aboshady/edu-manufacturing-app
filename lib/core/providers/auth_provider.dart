@@ -97,6 +97,20 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // ─── Obfuscated Deterministic Password Generator for Google users ──────────
+  String _generateGoogleUserPassword(String email) {
+    final salt = 'edu_manufacturing_app_salt_2026';
+    final input = '$email$salt';
+    int hash1 = 5381;
+    int hash2 = 89;
+    for (int i = 0; i < input.length; i++) {
+      final char = input.codeUnitAt(i);
+      hash1 = ((hash1 << 5) + hash1) + char;
+      hash2 = ((hash2 << 5) + hash2) ^ char;
+    }
+    return 'GoogleUser_${hash1.abs()}_${hash2.abs()}!';
+  }
+
   // ─── Google Sign-In ───────────────────────────────────────────────────────
   Future<bool> signInWithGoogle() async {
     _isGoogleLoading = true;
@@ -107,7 +121,6 @@ class AuthProvider extends ChangeNotifier {
       // 1. فتح شاشة اختيار الـ Google Account
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        // المستخدم ضغط Cancel
         _isGoogleLoading = false;
         notifyListeners();
         return false;
@@ -117,25 +130,60 @@ class AuthProvider extends ChangeNotifier {
       final String email = googleUser.email;
       final String? photoUrl = googleUser.photoUrl;
 
-      // 2. نشوف لو العميل موجود في Odoo
-      final existingPartners = await _odoo.getPartnerInfo(email);
+      // توليد كلمة سر فريدة وقوية خاصة بالمستخدم بناء على إيميله
+      final generatedPassword = _generateGoogleUserPassword(email);
 
-      int partnerId = 0;
-      int userId = DateTime.now().millisecondsSinceEpoch; // temp ID for Google users
+      bool isAuthenticated = false;
 
-      if (existingPartners.isNotEmpty) {
-        // العميل موجود — نستخدم بياناته
-        partnerId = existingPartners[0]['id'] as int;
-        userId = existingPartners[0]['id'] as int;
-      } else {
-        // عميل جديد — نسجله في Odoo كـ customer
-        partnerId = await _odoo.createPartner(
-          name: name,
-          email: email,
-          photoUrl: photoUrl,
-        );
-        userId = partnerId;
+      // 2. نحاول نسجل دخول بالـ Google-specific password أولاً
+      try {
+        final response = await _odoo.authenticate(email, generatedPassword);
+        final result = response['result'];
+        if (result != null && result['uid'] != null) {
+          isAuthenticated = true;
+        }
+      } catch (_) {
+        // لو فشل الدخول، معناه إن المستخدم جديد تماماً أو مسجل بباسوورد يدوي
       }
+
+      if (!isAuthenticated) {
+        // 3. نحاول نعمل signup للمستخدم الجديد
+        try {
+          final signupSuccess = await _odoo.webSignup(
+            name: name,
+            email: email,
+            password: generatedPassword,
+          );
+
+          if (signupSuccess) {
+            // بعد الـ signup الناجح، بنعمل authenticate للحصول على الـ session_id والـ uid
+            final authResponse = await _odoo.authenticate(email, generatedPassword);
+            final result = authResponse['result'];
+            if (result == null || result['uid'] == null) {
+              throw Exception('Authentication failed after signup');
+            }
+          }
+        } catch (signupError) {
+          // لو فشل الـ signup لأن الإيميل مسجل مسبقاً بباسوورد يدوي على الويب سايت
+          if (signupError.toString().contains('EMAIL_ALREADY_EXISTS')) {
+            _errorMessage = 'This email is already registered on the website. Please log in with your email and password.';
+            _isGoogleLoading = false;
+            notifyListeners();
+            return false;
+          } else {
+            rethrow;
+          }
+        }
+      }
+
+      // 4. جلب الـ Partner ID الخاص بالمستخدم المسجل
+      final partners = await _odoo.getPartnerInfo(email);
+      if (partners.isEmpty) {
+        throw Exception('User authenticated but partner record not found');
+      }
+
+      final int partnerId = partners[0]['id'] as int;
+      final int userId = partners[0]['id'] as int;
 
       _user = AppUser(
         id: userId,
@@ -146,18 +194,15 @@ class AuthProvider extends ChangeNotifier {
         isGoogleUser: true,
       );
 
-      // 3. نعمل session خاص بالـ Google user
+      // 5. حفظ الـ session
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('session_id', 'google_$partnerId');
+      await prefs.setString('session_id', _odoo.sessionId ?? '');
       await prefs.setInt('user_id', userId);
       await prefs.setString('user_email', email);
       await prefs.setString('user_name', name);
       await prefs.setInt('partner_id', partnerId);
       if (photoUrl != null) await prefs.setString('user_photo', photoUrl);
       await prefs.setBool('is_google_user', true);
-
-      // 4. نخلي الـ OdooService يعرف الـ partner ID
-      _odoo.setGoogleSession(partnerId);
 
       _isGoogleLoading = false;
       notifyListeners();

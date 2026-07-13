@@ -115,6 +115,58 @@ class OdooService {
     return result as int;
   }
 
+  // ─── Web Signup (للـ Google Sign-In) ──────────────────────────────────────
+  Future<bool> webSignup({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      // 1. Get signup page to get CSRF token and set-cookie
+      final getResponse = await _dio.get('/web/signup');
+      final html = getResponse.data.toString();
+      
+      // Extract CSRF token
+      final csrfMatch = RegExp(r'name="csrf_token"\s+value="([^"]+)"').firstMatch(html);
+      if (csrfMatch == null) {
+        throw Exception('Could not find CSRF token');
+      }
+      final csrfToken = csrfMatch.group(1);
+
+      // 2. Submit signup form
+      final postResponse = await _dio.post(
+        '/web/signup',
+        data: {
+          'csrf_token': csrfToken,
+          'name': name,
+          'login': email,
+          'password': password,
+          'confirm_password': password,
+        },
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+          followRedirects: false, // Don't redirect so we can inspect status
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+
+      final responseBody = postResponse.data.toString();
+      if (responseBody.contains('already exists') || 
+          responseBody.contains('already registered') ||
+          responseBody.contains('Email already exists')) {
+        throw Exception('EMAIL_ALREADY_EXISTS');
+      }
+
+      // Check if session cookie was set
+      return _sessionId != null;
+    } catch (e) {
+      if (e.toString().contains('EMAIL_ALREADY_EXISTS')) {
+        rethrow;
+      }
+      return false;
+    }
+  }
+
   // ─── Generic call_kw ──────────────────────────────────────────────────────
   Future<dynamic> callKw({
     required String model,
