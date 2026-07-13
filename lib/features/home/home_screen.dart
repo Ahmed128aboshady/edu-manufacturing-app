@@ -39,7 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final userName = auth.user?.name.split(' ').first ?? 'User';
+    final user = auth.user;
+    final userName = (user != null && user.name.isNotEmpty)
+        ? user.name.split(' ').first
+        : 'User';
 
     return Scaffold(
       backgroundColor: AppTheme.background,
