@@ -7,7 +7,8 @@ import '../../core/providers/cart_provider.dart';
 
 class MainScreen extends StatefulWidget {
   final Widget child;
-  const MainScreen({super.key, required this.child});
+  final String location;
+  const MainScreen({super.key, required this.child, required this.location});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -39,8 +40,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
-    final currentIndex = _getIndexFromLocation(location);
+    final currentIndex = _getIndexFromLocation(widget.location);
 
     return Scaffold(
       body: widget.child,

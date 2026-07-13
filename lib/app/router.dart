@@ -70,7 +70,10 @@ class AppRouter {
       ),
       ShellRoute(
         // لا نحدد له parentNavigatorKey لأننا نريده كشريط تبويبات سفلي فرعي
-        builder: (context, state, child) => MainScreen(child: child),
+        builder: (context, state, child) => MainScreen(
+          child: child,
+          location: state.matchedLocation,
+        ),
         routes: [
           GoRoute(
             path: '/home',
