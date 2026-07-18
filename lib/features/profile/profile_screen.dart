@@ -241,7 +241,7 @@ class ProfileScreen extends StatelessWidget {
   void _showLogoutDialog(BuildContext context, AuthProvider auth) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Sign Out?',
@@ -250,13 +250,13 @@ class ProfileScreen extends StatelessWidget {
             style: TextStyle(color: AppTheme.textSecondary)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext), // استخدام الـ dialogContext لإغلاق الـ Dialog نفسه
             child: const Text('Cancel',
                 style: TextStyle(color: AppTheme.textSecondary)),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext); // استخدام الـ dialogContext لإغلاق الـ Dialog نفسه
               // Delay logout slightly so the dialog pop animation finishes safely
               Future.delayed(const Duration(milliseconds: 250), () async {
                 try {
